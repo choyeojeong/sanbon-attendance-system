@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  base: '/attendance/lookup/', // 실제 앱 진입 경로
+  // base: '/attendance/lookup/',  ❌ 제거 또는 주석처리
   plugins: [
     react(),
     VitePWA({
@@ -12,7 +12,7 @@ export default defineConfig({
       manifest: {
         name: 'BlossomEdu 출결조회',
         short_name: '출결조회',
-        start_url: '/attendance/lookup/',
+        start_url: '/',
         display: 'standalone',
         background_color: '#ffffff',
         theme_color: '#3b82f6',
