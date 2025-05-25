@@ -71,6 +71,11 @@ function AttendanceLookupPage() {
   // ✅ FCM 토큰 저장
   const saveFcmToken = async (studentId) => {
     try {
+      const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      console.warn('🔕 FCM 권한 거부됨');
+      return;
+    }
       const token = await getToken(messaging, { vapidKey: 'BEq1ZLzR2KnSZJ7pQzmmkszvGpvePS9uhcR86Pcziq5FGHOosEEhlc_F2UEqmsZii_xfxc3Cy7ez8a_w0PXOglk' });
       await supabase.from('students').update({ fcm_token: token }).eq('id', studentId);
     } catch (err) {
