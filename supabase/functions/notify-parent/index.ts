@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
 import { create } from "https://deno.land/x/djwt@v3.0.2/mod.ts";
+import 'https://deno.land/std@0.203.0/dotenv/load.ts';
+
 
 // Firebase 환경변수
 const projectId = Deno.env.get("FIREBASE_PROJECT_ID")!;
@@ -24,7 +26,7 @@ async function createJWT() {
 
 serve(async (req) => {
   const { token, title, body } = await req.json();
-
+console.log("📬 푸시 전송 요청:", { token, title, body });
   const jwt = await createJWT();
 
   const response = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
@@ -44,3 +46,4 @@ serve(async (req) => {
   const result = await response.json();
   return new Response(JSON.stringify(result), { headers: { "Content-Type": "application/json" } });
 });
+

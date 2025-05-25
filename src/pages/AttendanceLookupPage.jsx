@@ -1,10 +1,22 @@
-// src/pages/AttendanceLookupPage.jsx
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabaseClient';
 import dayjs from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
+import { initializeApp } from 'firebase/app';
+import { getMessaging, getToken } from 'firebase/messaging';
 
 dayjs.extend(isoWeek);
+
+// 🔹 Firebase 설정
+const firebaseConfig = {
+  apiKey: 'AIzaSyDWW8oAdRwptijwo32HTH80wz3KPylztCk',
+  authDomain: 'sanbon-attendance-system.firebaseapp.com',
+  projectId: 'sanbon-attendance-system',
+  messagingSenderId: '215198982150',
+  appId: '1:215198982150:web:cf707914f544b0809fe387',
+};
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
 
 function AttendanceLookupPage() {
   const [name, setName] = useState('');
@@ -13,6 +25,16 @@ function AttendanceLookupPage() {
   const [lessons, setLessons] = useState([]);
   const [weekStart, setWeekStart] = useState(dayjs().startOf('week').add(1, 'day'));
 
+  // ✅ 자동 로그인
+  useEffect(() => {
+    const saved = localStorage.getItem('student');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setStudent(parsed);
+    }
+  }, []);
+
+  // ✅ 로그인 후 수업 불러오기
   useEffect(() => {
     if (student) fetchLessons();
   }, [student, weekStart]);
@@ -29,6 +51,7 @@ function AttendanceLookupPage() {
     setLessons(data || []);
   };
 
+  // ✅ 로그인
   const handleLogin = async () => {
     const { data } = await supabase
       .from('students')
@@ -36,11 +59,26 @@ function AttendanceLookupPage() {
       .eq('name', name)
       .eq('phone', phone)
       .single();
-    if (data) setStudent(data);
-    else alert('학생 정보를 찾을 수 없습니다.');
+    if (data) {
+      setStudent(data);
+      localStorage.setItem('student', JSON.stringify(data));
+      await saveFcmToken(data.id);
+    } else {
+      alert('학생 정보를 찾을 수 없습니다.');
+    }
   };
 
-  const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+  // ✅ FCM 토큰 저장
+  const saveFcmToken = async (studentId) => {
+    try {
+      const token = await getToken(messaging, { vapidKey: 'BEq1ZLzR2KnSZJ7pQzmmkszvGpvePS9uhcR86Pcziq5FGHOosEEhlc_F2UEqmsZii_xfxc3Cy7ez8a_w0PXOglk' });
+      await supabase.from('students').update({ fcm_token: token }).eq('id', studentId);
+    } catch (err) {
+      console.error('🔴 FCM 토큰 요청 실패:', err);
+    }
+  };
+
+  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
   const grouped = lessons.reduce((acc, lesson) => {
     const day = lesson.date;
     if (!acc[day]) acc[day] = [];

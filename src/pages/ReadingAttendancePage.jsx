@@ -22,6 +22,7 @@ function ReadingAttendancePage() {
   const [newMakeup, setNewMakeup] = useState({ studentName: '', date: '', time: '', memo: '' });
 
   useEffect(() => { fetchLessons(); }, [weekStart]);
+
   const fetchLessons = async () => {
     const weekDates = [...Array(6)].map((_, i) => weekStart.add(i, 'day').format('YYYY-MM-DD'));
     const { data: lessons } = await supabase
@@ -92,10 +93,9 @@ function ReadingAttendancePage() {
       });
     }
 
-    // ✅ FCM 알림 전송
     const student = studentsMap[lesson.student_id];
     if (student?.fcm_token) {
-      await fetch('https://YOUR_PROJECT_REF.functions.supabase.co/notify-parent', {
+      await fetch('https://swwktgersjyakpumlgoj.functions.supabase.co/notify-parent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -109,6 +109,7 @@ function ReadingAttendancePage() {
     setEditingId(null);
     fetchLessons();
   };
+
   const handleResetStatus = async (lesson) => {
     const { data: linked } = await supabase
       .from('lessons')
@@ -133,6 +134,10 @@ function ReadingAttendancePage() {
 
   const handleMemoChange = async (lesson, memo) => {
     await supabase.from('lessons').update({ memo }).eq('id', lesson.id);
+  };
+
+  const handleAppMemoChange = async (lesson, app_memo) => {
+    await supabase.from('lessons').update({ app_memo }).eq('id', lesson.id);
   };
 
   const handleDeleteLesson = async (lesson) => {
@@ -168,10 +173,9 @@ function ReadingAttendancePage() {
       memo: `원결석일: ${lesson.date} / 사유: ${reason}`,
     });
 
-    // ✅ FCM 알림 전송
     const student = studentsMap[lesson.student_id];
     if (student?.fcm_token) {
-      await fetch('https://YOUR_PROJECT_REF.functions.supabase.co/notify-parent', {
+      await fetch('https://swwktgersjyakpumlgoj.functions.supabase.co/notify-parent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -242,9 +246,10 @@ function ReadingAttendancePage() {
         <div key={date} style={{ marginBottom: '30px', backgroundColor: '#ffffff', padding: '15px', border: '1px solid #ddd' }}>
           <h3>{weekdays[idx]} ({date}) - 수업 인원 {lessons.length}명</h3>
           <table border="1" cellPadding="8" style={{ width: '100%', backgroundColor: '#fff' }}>
-            <thead style={{ backgroundColor: '#f0f0f0' }}>
-              <tr><th>시간</th><th>학생명</th><th>학교</th><th>학년</th><th>상태</th><th>메모</th><th>출결</th><th>삭제</th></tr>
-            </thead>
+            <thead style={{ backgroundColor: '#f0f0f0' }}><tr>
+              <th>시간</th><th>학생명</th><th>학교</th><th>학년</th>
+              <th>상태</th><th>메모</th><th>앱 표시 메모</th><th>출결</th><th>삭제</th>
+            </tr></thead>
             <tbody>
               {lessons.map((lesson) => {
                 const student = studentsMap[lesson.student_id];
@@ -274,6 +279,14 @@ function ReadingAttendancePage() {
                       />
                     </td>
                     <td>
+                      <input
+                        type="text"
+                        defaultValue={lesson.app_memo || ''}
+                        placeholder="앱 표시 메모 입력"
+                        onBlur={(e) => handleAppMemoChange(lesson, e.target.value)}
+                      />
+                    </td>
+                    <td>
                       {isEditing ? (
                         <div>
                           <input type="text" placeholder="사유" value={info.reason} onChange={(e) => setAbsentInfoMap(prev => ({ ...prev, [lesson.id]: { ...info, reason: e.target.value } }))} />
@@ -291,9 +304,7 @@ function ReadingAttendancePage() {
                         </div>
                       ) : (
                         <>
-                          {!isAbsent && (
-                            <button onClick={() => handleAbsent(lesson)}>결석</button>
-                          )}
+                          {!isAbsent && <button onClick={() => handleAbsent(lesson)}>결석</button>}
                           {isAbsent && (
                             <>
                               <button onClick={() => handleResetStatus(lesson)}>출결초기화</button>

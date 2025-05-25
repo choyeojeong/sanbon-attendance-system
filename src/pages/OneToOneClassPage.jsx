@@ -18,6 +18,11 @@ function OneToOneClassPage() {
   const [linkedMakeupLessons, setLinkedMakeupLessons] = useState({});
   const [memoMap, setMemoMap] = useState({});
 
+  const handleAbsent = (lesson) => {
+    setEditingId(lesson.id);
+    setAbsentInfo({ reason: '', makeup: '보강O', date: '', test_time: '', class_time: '' });
+  };
+
   const generateTimeSlots = (dateStr) => {
     const date = dayjs(dateStr);
     const isSaturday = date.day() === 6;
@@ -44,7 +49,10 @@ function OneToOneClassPage() {
   const TIME_SLOTS = generateTimeSlots(selectedDate);
 
   useEffect(() => { fetchTeachers(); }, []);
-  useEffect(() => { if (selectedTeacher && selectedDate) fetchLessons(); }, [selectedTeacher, selectedDate]);
+  useEffect(() => {
+    if (selectedTeacher && selectedDate) fetchLessons();
+  }, [selectedTeacher, selectedDate]);
+
   const fetchTeachers = async () => {
     const { data } = await supabase.from('students').select('teacher').neq('teacher', '').order('teacher');
     const unique = Array.from(new Set(data.map((s) => s.teacher)));
@@ -56,7 +64,8 @@ function OneToOneClassPage() {
       .from('lessons')
       .select('*')
       .eq('date', selectedDate)
-      .eq('teacher', selectedTeacher);
+      .eq('teacher', selectedTeacher)
+      .eq('type', '일대일');
 
     const { data: students } = await supabase.from('students').select('*');
     const map = {};
@@ -96,6 +105,32 @@ function OneToOneClassPage() {
     setMemoMap(memoMap);
   };
 
+  const handleMemoChange = async (lesson, memo) => {
+    await supabase.from('lessons').update({ memo }).eq('id', lesson.id);
+    fetchLessons();
+  };
+
+  const handleAppMemoChange = async (lesson, app_memo) => {
+    await supabase.from('lessons').update({ app_memo }).eq('id', lesson.id);
+    fetchLessons();
+  };
+
+  const handleMemoOnlyChange = async (time, memo) => {
+    const existing = memoMap[time];
+    if (existing) {
+      await supabase.from('lessons').update({ memo }).eq('id', existing.id);
+    } else {
+      await supabase.from('lessons').insert({
+        teacher: selectedTeacher,
+        date: selectedDate,
+        time,
+        type: '메모',
+        memo,
+      });
+    }
+    fetchLessons();
+  };
+
   const handleSaveAbsent = async (lesson) => {
     await supabase.from('lessons').update({
       status: absentInfo.makeup === '보강X' ? '결석(보강X)' : '결석(보강O)',
@@ -124,10 +159,9 @@ function OneToOneClassPage() {
       });
     }
 
-    // ✅ FCM 푸시 알림 전송
     const student = studentsMap[lesson.student_id];
     if (student?.fcm_token) {
-      await fetch('https://YOUR_PROJECT_REF.functions.supabase.co/notify-parent', {
+      await fetch('https://swwktgersjyakpumlgoj.functions.supabase.co/notify-parent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -141,6 +175,7 @@ function OneToOneClassPage() {
     setEditingId(null);
     fetchLessons();
   };
+
   const handleMoveSave = async (lesson) => {
     await supabase.from('lessons')
       .delete()
@@ -164,10 +199,9 @@ function OneToOneClassPage() {
       makeup_lesson_time: moveInfo.class_time,
     });
 
-    // ✅ FCM 알림 전송
     const student = studentsMap[lesson.student_id];
     if (student?.fcm_token) {
-      await fetch('https://YOUR_PROJECT_REF.functions.supabase.co/notify-parent', {
+      await fetch('https://swwktgersjyakpumlgoj.functions.supabase.co/notify-parent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -205,26 +239,6 @@ function OneToOneClassPage() {
     fetchLessons();
   };
 
-  const handleMemoChange = async (lesson, memo) => {
-    await supabase.from('lessons').update({ memo }).eq('id', lesson.id);
-    fetchLessons();
-  };
-
-  const handleMemoOnlyChange = async (time, memo) => {
-    const existing = memoMap[time];
-    if (existing) {
-      await supabase.from('lessons').update({ memo }).eq('id', existing.id);
-    } else {
-      await supabase.from('lessons').insert({
-        teacher: selectedTeacher,
-        date: selectedDate,
-        time,
-        type: '메모',
-        memo,
-      });
-    }
-    fetchLessons();
-  };
   return (
     <div style={{ padding: '30px', backgroundColor: '#fff8dc' }}>
       <h2>일대일 수업 관리</h2>
@@ -239,9 +253,10 @@ function OneToOneClassPage() {
       </div>
 
       <table border="1" cellPadding="8" style={{ width: '100%', backgroundColor: '#ffffff' }}>
-        <thead style={{ backgroundColor: '#f5f5dc' }}>
-          <tr><th>시간</th><th>학생명</th><th>학교</th><th>학년</th><th>선생님</th><th>상태</th><th>메모</th><th>출결</th><th>삭제</th></tr>
-        </thead>
+        <thead style={{ backgroundColor: '#f5f5dc' }}><tr>
+          <th>시간</th><th>학생명</th><th>학교</th><th>학년</th><th>선생님</th>
+          <th>상태</th><th>메모</th><th>앱 표시 메모</th><th>출결</th><th>삭제</th>
+        </tr></thead>
         <tbody>
           {TIME_SLOTS.map(([start, end]) => {
             const lesson = lessons.find((l) => l.time === start && l.type !== '메모');
@@ -290,6 +305,16 @@ function OneToOneClassPage() {
                       onBlur={(e) => handleMemoOnlyChange(start, e.target.value)}
                     />
                   )}
+                </td>
+                <td>
+                  {lesson ? (
+                    <input
+                      type="text"
+                      defaultValue={lesson.app_memo || ''}
+                      placeholder="앱 표시 메모 입력"
+                      onBlur={(e) => handleAppMemoChange(lesson, e.target.value)}
+                    />
+                  ) : null}
                 </td>
                 <td>
                   {lesson && (
