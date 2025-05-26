@@ -1,49 +1,39 @@
 import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
-import { create } from "https://deno.land/x/djwt@v3.0.2/mod.ts";
-import 'https://deno.land/std@0.203.0/dotenv/load.ts';
-
-
-// Firebase 환경변수
-const projectId = Deno.env.get("FIREBASE_PROJECT_ID")!;
-const clientEmail = Deno.env.get("FIREBASE_CLIENT_EMAIL")!;
-const privateKey = Deno.env.get("FIREBASE_PRIVATE_KEY")!.replace(/\\n/g, '\n');
-
-async function createJWT() {
-  const iat = Math.floor(Date.now() / 1000);
-  const exp = iat + 60 * 60;
-  return await create(
-    { alg: "RS256", typ: "JWT" },
-    {
-      iss: clientEmail,
-      scope: "https://www.googleapis.com/auth/firebase.messaging",
-      aud: `https://oauth2.googleapis.com/token`,
-      iat,
-      exp,
-    },
-    privateKey
-  );
-}
 
 serve(async (req) => {
-  const { token, title, body } = await req.json();
-console.log("📬 푸시 전송 요청:", { token, title, body });
-  const jwt = await createJWT();
+  try {
+    const { token, title, body } = await req.json();
 
-  const response = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${jwt}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      message: {
-        token,
-        notification: { title, body },
+    console.log("📥 FCM 요청 수신:", { token, title, body });
+
+    const response = await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    }),
-  });
+      body: JSON.stringify({
+        to: token,
+        title,
+        body,
+        sound: "default",
+        priority: "high",
+      }),
+    });
 
-  const result = await response.json();
-  return new Response(JSON.stringify(result), { headers: { "Content-Type": "application/json" } });
+    const data = await response.json();
+    console.log("📤 Expo 전송 결과:", data);
+
+    if (response.status !== 200 || data.data?.status === "error") {
+      throw new Error(data.data?.message || "Expo 전송 실패");
+    }
+
+    return new Response(JSON.stringify({ success: true }), { status: 200 });
+
+  } catch (error) {
+    console.error("❌ 오류 발생:", error);
+    return new Response(
+      JSON.stringify({ success: false, message: error.message }),
+      { status: 500 }
+    );
+  }
 });
-

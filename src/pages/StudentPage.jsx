@@ -13,6 +13,7 @@ function StudentPage() {
     grade: '',
     teacher: '',
     phone: '',
+    parent_phone: '', // ✅ 추가
     first_day: '',
     one_day: '',
     one_test_time: '',
@@ -56,6 +57,7 @@ function StudentPage() {
       reading_schedule: { ...prev.reading_schedule, [day]: value },
     }));
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.first_day || !form.one_day || !form.one_class_time) {
@@ -88,6 +90,7 @@ function StudentPage() {
       grade: '',
       teacher: '',
       phone: '',
+      parent_phone: '', // ✅ 초기화
       first_day: '',
       one_day: '',
       one_test_time: '',
@@ -164,6 +167,7 @@ function StudentPage() {
         <input name="grade" placeholder="학년" value={form.grade} onChange={handleChange} />
         <input name="teacher" placeholder="담당선생님" value={form.teacher} onChange={handleChange} />
         <input name="phone" placeholder="전화번호 (예: 01012345678)" value={form.phone} onChange={handleChange} />
+        <input name="parent_phone" placeholder="학부모 전화번호 (예: 01012345678)" value={form.parent_phone} onChange={handleChange} /> {/* ✅ 추가 */}
         <input name="first_day" type="date" value={form.first_day} onChange={handleChange} />
 
         <div style={{ marginTop: '20px' }}>
