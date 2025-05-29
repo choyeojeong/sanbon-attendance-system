@@ -170,20 +170,6 @@ function StudentPage() {
     <div style={{ padding: '40px', backgroundColor: '#fffaf0' }}>
       <h2>학생 관리</h2>
 
-      {/* 검색창 */}
-      <div style={{ marginBottom: '20px' }}>
-        <input
-          placeholder="학생 이름 검색"
-          value={searchName}
-          onChange={(e) => setSearchName(e.target.value)}
-        />
-        <button onClick={handleSearch}>검색</button>
-        <button onClick={() => {
-          setSearchName('');
-          setFilteredStudents(students);
-        }}>초기화</button>
-      </div>
-
       <form onSubmit={handleSubmit} style={{ marginBottom: '30px' }}>
         <input name="name" placeholder="이름" value={form.name} onChange={handleChange} />
         <input name="school" placeholder="학교" value={form.school} onChange={handleChange} />
@@ -232,6 +218,20 @@ function StudentPage() {
 
         <button type="submit">{editingId ? '수정' : '등록'}</button>
       </form>
+
+      {/* 검색창 위치 옮김 */}
+      <div style={{ marginBottom: '20px' }}>
+        <input
+          placeholder="학생 이름 검색"
+          value={searchName}
+          onChange={(e) => setSearchName(e.target.value)}
+        />
+        <button onClick={handleSearch}>검색</button>
+        <button onClick={() => {
+          setSearchName('');
+          setFilteredStudents(students);
+        }}>초기화</button>
+      </div>
 
       <div>
         <label>퇴원일 입력 후 삭제: </label>
