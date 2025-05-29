@@ -1,6 +1,18 @@
 import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
 
 serve(async (req) => {
+  // ✅ CORS Preflight 요청 처리 (OPTIONS)
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
+  }
+
   try {
     const { token, title, body } = await req.json();
 
@@ -27,13 +39,23 @@ serve(async (req) => {
       throw new Error(data.data?.message || "Expo 전송 실패");
     }
 
-    return new Response(JSON.stringify({ success: true }), { status: 200 });
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*", // ✅ 성공 응답에도 CORS 허용
+      },
+    });
 
   } catch (error) {
     console.error("❌ 오류 발생:", error);
     return new Response(
       JSON.stringify({ success: false, message: error.message }),
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          "Access-Control-Allow-Origin": "*", // ✅ 실패 응답에도 CORS 허용
+        },
+      }
     );
   }
 });
