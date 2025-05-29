@@ -105,18 +105,20 @@ function KioskPage() {
 
   return (
     <div style={styles.container}>
-      <h2>📲 키오스크 출석</h2>
-      <input
-        type="text"
-        placeholder="전화번호 입력"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        style={styles.input}
-      />
-      <button onClick={handleSubmit} disabled={isLoading} style={styles.button}>
-        {isLoading ? '처리 중...' : '출석하기'}
-      </button>
-      {message && <p>{message}</p>}
+      <div style={styles.card}>
+        <h2 style={styles.title}>📲 키오스크 출석</h2>
+        <input
+          type="text"
+          placeholder="전화번호 입력"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          style={styles.input}
+        />
+        <button onClick={handleSubmit} disabled={isLoading} style={styles.button}>
+          {isLoading ? '처리 중...' : '출석하기'}
+        </button>
+        {message && <p style={styles.message}>{message}</p>}
+      </div>
     </div>
   );
 }
@@ -126,23 +128,45 @@ const styles = {
     backgroundColor: '#fdf5e6',
     height: '100vh',
     display: 'flex',
-    flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    fontSize: '18px',
+    padding: '5vw',
+  },
+  card: {
+    width: '100%',
+    maxWidth: '600px',   // ✅ 기존 400px → 600px 으로 확장
+    minWidth: '300px',
+    backgroundColor: '#fff8dc',
+    padding: '2rem',
+    borderRadius: '1rem',
+    boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+    textAlign: 'center',
+  },
+  title: {
+    fontSize: '1.5rem',
+    marginBottom: '1.5rem',
   },
   input: {
-    padding: '10px',
-    fontSize: '16px',
-    marginBottom: '10px',
-    width: '250px',
+    padding: '0.8rem',
+    fontSize: '1rem',
+    width: '100%',
+    marginBottom: '1rem',
+    borderRadius: '0.5rem',
+    border: '1px solid #ccc',
   },
   button: {
-    padding: '10px 20px',
-    fontSize: '16px',
+    padding: '0.8rem',
+    fontSize: '1rem',
+    width: '100%',
     backgroundColor: '#deb887',
     border: 'none',
+    borderRadius: '0.5rem',
     cursor: 'pointer',
+  },
+  message: {
+    marginTop: '1rem',
+    fontSize: '1rem',
+    color: '#333',
   },
 };
 
