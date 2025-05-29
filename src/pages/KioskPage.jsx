@@ -133,9 +133,9 @@ const styles = {
     padding: '5vw',
   },
   card: {
-    width: '100%',
-    maxWidth: '600px',   // ✅ 기존 400px → 600px 으로 확장
-    minWidth: '300px',
+    width: '90vw',          // ✅ 태블릿에 맞춰 너비 확장
+    maxWidth: 'none',       // ✅ 제한 제거
+    minWidth: '320px',
     backgroundColor: '#fff8dc',
     padding: '2rem',
     borderRadius: '1rem',
