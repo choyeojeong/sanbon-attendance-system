@@ -7,13 +7,15 @@ const DAY_MAP = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '�
 
 function StudentPage() {
   const [students, setStudents] = useState([]);
+  const [filteredStudents, setFilteredStudents] = useState([]);
+  const [searchName, setSearchName] = useState('');
   const [form, setForm] = useState({
     name: '',
     school: '',
     grade: '',
     teacher: '',
     phone: '',
-    parent_phone: '', // ✅ 추가
+    parent_phone: '',
     first_day: '',
     one_day: '',
     one_test_time: '',
@@ -30,6 +32,7 @@ function StudentPage() {
   const fetchStudents = async () => {
     const { data } = await supabase.from('students').select('*').order('name');
     setStudents(data || []);
+    setFilteredStudents(data || []);
   };
 
   const handleChange = (e) => {
@@ -90,7 +93,7 @@ function StudentPage() {
       grade: '',
       teacher: '',
       phone: '',
-      parent_phone: '', // ✅ 초기화
+      parent_phone: '',
       first_day: '',
       one_day: '',
       one_test_time: '',
@@ -158,16 +161,36 @@ function StudentPage() {
     fetchStudents();
   };
 
+  const handleSearch = () => {
+    const filtered = students.filter((s) => s.name.includes(searchName.trim()));
+    setFilteredStudents(filtered);
+  };
+
   return (
     <div style={{ padding: '40px', backgroundColor: '#fffaf0' }}>
       <h2>학생 관리</h2>
+
+      {/* 검색창 */}
+      <div style={{ marginBottom: '20px' }}>
+        <input
+          placeholder="학생 이름 검색"
+          value={searchName}
+          onChange={(e) => setSearchName(e.target.value)}
+        />
+        <button onClick={handleSearch}>검색</button>
+        <button onClick={() => {
+          setSearchName('');
+          setFilteredStudents(students);
+        }}>초기화</button>
+      </div>
+
       <form onSubmit={handleSubmit} style={{ marginBottom: '30px' }}>
         <input name="name" placeholder="이름" value={form.name} onChange={handleChange} />
         <input name="school" placeholder="학교" value={form.school} onChange={handleChange} />
         <input name="grade" placeholder="학년" value={form.grade} onChange={handleChange} />
         <input name="teacher" placeholder="담당선생님" value={form.teacher} onChange={handleChange} />
         <input name="phone" placeholder="전화번호 (예: 01012345678)" value={form.phone} onChange={handleChange} />
-        <input name="parent_phone" placeholder="학부모 전화번호 (예: 01012345678)" value={form.parent_phone} onChange={handleChange} /> {/* ✅ 추가 */}
+        <input name="parent_phone" placeholder="학부모 전화번호 (예: 01012345678)" value={form.parent_phone} onChange={handleChange} />
         <input name="first_day" type="date" value={form.first_day} onChange={handleChange} />
 
         <div style={{ marginTop: '20px' }}>
@@ -232,7 +255,7 @@ function StudentPage() {
           </tr>
         </thead>
         <tbody>
-          {students.map((s, i) => (
+          {filteredStudents.map((s, i) => (
             <tr key={s.id}>
               <td>{i + 1}</td>
               <td>{s.name}</td>
